@@ -166,7 +166,7 @@ int main() {
 
           double Lf = 2.67;
           // first predicted steering angle and throttle
-          msgJson["steering_angle"] = vars[0]/(deg2rad(25)*Lf);
+          msgJson["steering_angle"] =  - vars[0]/(deg2rad(25)*Lf);
           msgJson["throttle"] = vars[1];
 
           //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
