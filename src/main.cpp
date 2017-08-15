@@ -108,15 +108,15 @@ int main() {
             double shift_x = ptsx[i] - px;
             double shift_y = ptsy[i] - py;
 
-            ptxs[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
-            ptsy[i] = (shift_x * sin(0 - psi) - shift_y * cos(0 - psi));
+            ptsx[i] = (shift_x * cos(0 - psi) - shift_y * sin(0 - psi));
+            ptsy[i] = (shift_x * sin(0 - psi) + shift_y * cos(0 - psi));
 
           }
 
-          double* ptrx = &ptxs[0];
+          double* ptrx = &ptsx[0];
           Eigen::Map<Eigen::VectorXd> ptsx_transform(ptrx, 6);
 
-          double* ptry = &ptys[0];
+          double* ptry = &ptsy[0];
           Eigen::Map<Eigen::VectorXd> ptsy_transform(ptry, 6);
 
           auto coeffs = polyfit(ptsx_transform, ptsy_transform, 3);
@@ -138,7 +138,7 @@ int main() {
           Eigen::VectorXd state(6);
           state << 0, 0, 0, v, cte, epsi;
 
-          auto vars = MPC.solve(state, coeffs);
+          auto vars = mpc.Solve(state, coeffs);
 
           //Display the waypoints/reference line
           vector<double> next_x_vals;
@@ -196,7 +196,7 @@ int main() {
           // NOTE: REMEMBER TO SET THIS TO 100 MILLISECONDS BEFORE
           // SUBMITTING.
           // Commenting out the following line?
-          this_thread::sleep_for(chrono::milliseconds(100));
+          // this_thread::sleep_for(chrono::milliseconds(100));
           ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
         }
       } else {
