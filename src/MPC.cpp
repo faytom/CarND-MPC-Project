@@ -8,7 +8,7 @@ using CppAD::AD;
 // TODO: Set the timestep length and duration
 size_t N = 10;
 double dt = 0.1;
-
+size_t latency_ind = 1;
 // This value assumes the model presented in the classroom is used.
 //
 // It was obtained by measuring the radius formed by running the vehicle in the
@@ -23,7 +23,7 @@ const double Lf = 2.67;
 
 double ref_cte = 0;
 double ref_epsi = 0;
-double ref_v = 80;
+double ref_v = 100;
 // indicator of state starts
 size_t x_start = 0;
 size_t y_start = x_start + N;
@@ -33,6 +33,9 @@ size_t cte_start = v_start + N;
 size_t epsi_start = cte_start + N;
 size_t delta_start = epsi_start + N;
 size_t a_start = epsi_start + N - 1;
+
+double delta_prev = 0.0;
+double a_prev = 0.1;
 
 class FG_eval {
  public:
@@ -216,11 +219,25 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
     vars_upperbound[i] = 0.436 * Lf;
     vars_lowerbound[i] = -0.436 * Lf;
   }
+
+  // // constrain delta to be the previous control for the latency time
+  // for (int i = delta_start; i < delta_start + latency_ind; i++) {
+  //   vars_lowerbound[i] = delta_prev;
+  //   vars_upperbound[i] = delta_prev;
+  // }
+
   // acceleration upper and lower bound
   for(int i = a_start; i < n_vars; i++){
     vars_upperbound[i] = 1.0;
     vars_lowerbound[i] = -1.0;
   }
+
+  // // constrain a to be the previous control for the latency time 
+  // for (int i = a_start; i < a_start + latency_ind; i++) {
+  //   vars_lowerbound[i] = a_prev;
+  //   vars_upperbound[i] = a_prev;
+  // }
+
   // Lower and upper limits for the constraints
   // Should be 0 besides initial state.
   Dvector constraints_lowerbound(n_constraints);
@@ -285,6 +302,16 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs) {
   //
   // {...} is shorthand for creating a vector, so auto x1 = {1.0,2.0}
   // creates a 2 element double vector.
+  
+  std::cout << "delta prev " << delta_prev << std::endl;
+  std::cout << "a prev " << a_prev << std::endl;
+
+  // update previous actuation values
+  delta_prev = solution.x[delta_start + latency_ind];
+  a_prev     = solution.x[a_start + latency_ind];
+
+
+
   vector<double> result;
   result.push_back(solution.x[delta_start]);
   result.push_back(solution.x[a_start]);

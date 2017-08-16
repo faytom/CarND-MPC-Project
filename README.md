@@ -2,6 +2,45 @@
 Self-Driving Car Engineer Nanodegree Program
 
 ---
+## The Model
+The system uses kinematic bicycle model shown in the following:
+```
+  x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
+  y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
+  psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
+  v_[t+1] = v[t] + a[t] * dt
+  cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
+  epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+```
+`x, y` are the coordinate of the car, `psi` is the heading direction, `v` is the car velocity and `cte` `epsi` are cross-track-error and orientation error repectively. `Lf` is the front wheel of the car to its center of gravity(COG).
+
+## Timestep Length and Elapsed Duration (N & dt)
+```
+N = 10;
+dt = 0.1;
+```
+This effectively resutls in one second path predicting for the model. Large **N** will cause the computer too slow to run, and **dt** will affect the controlling resolution, large **dt** will introduce larger error due to discretization error. However, smaller **dt** needs more computation power to solve the result. 
+
+## Model Predictive Control with Latency
+According to [ksakmann](https://github.com/ksakmann/CarND-MPC-Project)'s explanation on MPC with Latency
+>In one approach the prospective position of the car is estimated based on its current speed and heading direction by propagating the position of the car forward until the expected time when actuations are expected to have an effect. The NMPC trajectory is then determined by solving the control problem starting from that position.
+
+>In the other approach the control problem is solved from the current position and time onwards. Latency is taken into account by constraining the controls to the values of the previous iteration for the duration of the latency. Thus the optimal trajectory is computed starting from the time after the latency period. This has the advantage that the dynamics during the latency period is still calculated according to the vehicle model.
+
+I tried these two method, however only the first one seemed to work well.
+For predicting new state with delay, I used the following equations:
+```
+double delay_x = v*delay_t;
+double delay_y = 0;
+double delay_psi = -v*steer_value / Lf * delay_t;
+double delay_v = v + throttle_value*delay_t;
+double delay_cte = cte + v*sin(epsi)*delay_t;
+double delay_epsi = epsi-v*steer_value /Lf * delay_t;
+```
+And new state is updated by
+`state << delay_x, delay_y, delay_psi, delay_v, delay_cte, delay_epsi;`
+
+The final result work quite good with no off-track occuring.
 
 ## Dependencies
 
